@@ -24,4 +24,4 @@ yarn-error.log*
 
 # ResScript build files
 lib/
-.bs.js
+*.bs.js
