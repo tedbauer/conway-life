@@ -5,6 +5,8 @@ B /Users/theodorebauer/Documents/nonwork/conway-life/node_modules/rescript/lib/o
 FLG -w +a-4-9-20-40-41-42-50-61-102
 S /Users/theodorebauer/Documents/nonwork/conway-life/node_modules/@rescript/react/lib/ocaml
 B /Users/theodorebauer/Documents/nonwork/conway-life/node_modules/@rescript/react/lib/ocaml
+S /Users/theodorebauer/Documents/nonwork/conway-life/node_modules/rescript-webapi/lib/ocaml
+B /Users/theodorebauer/Documents/nonwork/conway-life/node_modules/rescript-webapi/lib/ocaml
 S src
 B lib/bs/src
 ####BSB GENERATED: NO EDIT}
