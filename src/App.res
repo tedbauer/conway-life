@@ -1,3 +1,5 @@
+%%raw(`import './App.css';`)
+
 @module("./logo.svg") external logo: string = "default"
 
 module GameCanvas = {
@@ -21,7 +23,6 @@ let getCell = (row, col, board) => {
   if row >= numRows || col >= numCols || row < 0 || col < 0 {
     None
   } else {
-    //Js.log(board)
     switch Belt.Array.get(board, row * numCols + col) {
     | Some(cell) => Some(cell)
     | None => raise(InvalidLookup(row, col))
@@ -45,8 +46,20 @@ let numAliveNeighbors = (row, col, board) => {
   aliveNeighbors
 }
 
+let randomState = numCells => {
+  let newBoard = []
+  for i in 0 to numCells - 1 {
+    let rand = Js.Math.random()
+    if rand > 0.5 {
+      ignore(Js.Array.push(Alive, newBoard))
+    } else {
+      ignore(Js.Array.push(Dead, newBoard))
+    }
+  }
+  newBoard
+}
+
 let stepBoard = state => {
-  Js.log("step board called")
   let newGen = []
   for i in 0 to Belt.Array.length(state) - 1 {
     let col = mod(i, numCols)
@@ -82,7 +95,6 @@ let draw = state => {
 
   let sideLength = 20
 
-  Js.log("draw called")
   switch document->getElementById("gameCanvas") {
   | Some(canvas) => {
       let ctx = canvas->CanvasElement.getContext2d
@@ -91,10 +103,7 @@ let draw = state => {
         let row = i / numRows
         switch Belt.Array.get(state, i) {
         | Some(Dead) => setFillStyle(ctx, String, "white")
-        | Some(Alive) => {
-            Js.log("draw black")
-            setFillStyle(ctx, String, "black")
-          }
+        | Some(Alive) => setFillStyle(ctx, String, "black")
         | None => Js.log("error: found None in currState")
         }
         ctx->beginPath
@@ -107,40 +116,48 @@ let draw = state => {
         ctx->fill
       }
     }
-  | None => {
-      Js.log("we're here now")
-      ()
-    }
+  | None => ()
+  }
+}
+
+module RandomButton = {
+  @react.component
+  let make = (~genRandomState: ReactEvent.Mouse.t => unit) => {
+    <button onClick=genRandomState> {React.string("Random")} </button>
   }
 }
 
 module StepButton = {
   @react.component
   let make = (~stepState: ReactEvent.Mouse.t => unit) => {
-    let msg = "Step"
-
-    <button onClick=stepState> {msg->React.string} </button>
+    <button onClick=stepState> {React.string("Step")} </button>
   }
 }
 
 module StartStopButton = {
   type state =
-    | Start
-    | Stop
+    | Playing(Js.Global.intervalId)
+    | Paused
 
   @react.component
-  let make = () => {
-    let (currState, setState) = React.useState(_ => Start)
+  let make = (~stepState: unit => unit) => {
+    let (currState, setState) = React.useState(_ => Paused)
 
-    let toggleState = _ =>
-      switch currState {
-      | Start => setState(_prev => Stop)
-      | Stop => setState(_prev => Start)
-      }
+    let toggleState = _ => {
+      setState(prev => {
+        switch prev {
+        | Playing(interval) => {
+            Js.Global.clearInterval(interval)
+            Paused
+          }
+        | Paused => Playing(Js.Global.setInterval(stepState, 150))
+        }
+      })
+    }
 
     let msg = switch currState {
-    | Start => "Start"
-    | Stop => "Stop"
+    | Playing(_) => "Stop"
+    | Paused => "Start"
     }
 
     <button onClick=toggleState> {msg->React.string} </button>
@@ -149,122 +166,30 @@ module StartStopButton = {
 
 @react.component
 let make = () => {
-  let (currState, setState) = React.useState(_ => [
-    Dead,
-    Dead,
-    Dead,
-    Alive,
-    Dead,
-    Alive,
-    Alive,
-    Dead,
-    Dead,
-    Alive,
-    Dead,
-    Dead,
-    Dead,
-    Alive,
-    Dead,
-    Dead,
-    Dead,
-    Dead,
-    Alive,
-    Dead,
-    Alive,
-    Dead,
-    Alive,
-    Dead,
-    Dead,
-    Dead,
-    Alive,
-    Alive,
-    Alive,
-    Alive,
-    Dead,
-    Dead,
-    Dead,
-    Dead,
-    Dead,
-    Dead,
-    Dead,
-    Dead,
-    Dead,
-    Dead,
-    Dead,
-    Dead,
-    Dead,
-    Dead,
-    Dead,
-    Dead,
-    Dead,
-    Dead,
-    Dead,
-    Dead,
-    Dead,
-    Dead,
-    Dead,
-    Dead,
-    Dead,
-    Dead,
-    Dead,
-    Dead,
-    Dead,
-    Dead,
-    Dead,
-    Alive,
-    Alive,
-    Alive,
-    Alive,
-    Alive,
-    Dead,
-    Dead,
-    Dead,
-    Dead,
-    Dead,
-    Dead,
-    Alive,
-    Alive,
-    Dead,
-    Dead,
-    Dead,
-    Alive,
-    Dead,
-    Alive,
-    Alive,
-    Alive,
-    Alive,
-    Alive,
-    Alive,
-    Alive,
-    Alive,
-    Alive,
-    Alive,
-    Alive,
-    Alive,
-    Alive,
-    Alive,
-    Alive,
-    Alive,
-    Alive,
-    Alive,
-    Alive,
-    Dead,
-    Dead,
-  ])
-
-  draw(currState)
+  let (_, setState) = React.useState(_ => randomState(100))
 
   let stepState = _ => {
-    Js.log("this was called?")
-    setState(_prev => {
-      Js.log(currState)
-      let nextBoard = stepBoard(_prev)
+    setState(prev => {
+      let nextBoard = stepBoard(prev)
       draw(nextBoard)
       nextBoard
     })
   }
 
-  <div className="App"> <GameCanvas /> <StartStopButton /> <StepButton stepState /> </div>
+  let genRandomState = _ => {
+    setState(_prev => {
+      let nextBoard = randomState(100)
+      draw(nextBoard)
+      nextBoard
+    })
+  }
+
+  <div className="App">
+    <GameCanvas />
+    <StartStopButton stepState />
+    <StepButton stepState />
+    <RandomButton genRandomState />
+  </div>
 }
 
 //
