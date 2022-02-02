@@ -1,5 +1,3 @@
-%%raw(`import './index.css';`)
-
 let rootQuery = ReactDOM.querySelector("#root")
 
 switch rootQuery {
