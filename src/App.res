@@ -1,7 +1,5 @@
 %%raw(`import './App.css';`)
 
-@module("./logo.svg") external logo: string = "default"
-
 module GameCanvas = {
   @react.component
   let make = () => {
