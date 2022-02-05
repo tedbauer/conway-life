@@ -3,7 +3,7 @@
 module GameCanvas = {
   @react.component
   let make = () => {
-    let (width, height) = (400, 400)
+    let (width, height) = (800, 600)
     <canvas id="gameCanvas" width={Belt.Int.toString(width)} height={Belt.Int.toString(height)} />
   }
 }
@@ -12,10 +12,17 @@ type cell =
   | Dead
   | Alive
 
-let numCols = 10
-let numRows = 10
+let numCols = 40
+let numRows = 30
 
-exception InvalidLookup(int, int)
+type lookup = {
+  row: int,
+  col: int,
+  board: array<cell>,
+  index: int,
+}
+
+exception InvalidLookup(lookup)
 
 let getCell = (row, col, board) => {
   if row >= numRows || col >= numCols || row < 0 || col < 0 {
@@ -23,7 +30,7 @@ let getCell = (row, col, board) => {
   } else {
     switch Belt.Array.get(board, row * numCols + col) {
     | Some(cell) => Some(cell)
-    | None => raise(InvalidLookup(row, col))
+    | None => raise(InvalidLookup({row: row, col: col, index: row * numCols + col, board: board}))
     }
   }
 }
@@ -164,7 +171,7 @@ module StartStopButton = {
 
 @react.component
 let make = () => {
-  let (_, setState) = React.useState(_ => randomState(100))
+  let (_, setState) = React.useState(_ => randomState(1200))
 
   let stepState = _ => {
     setState(prev => {
@@ -176,7 +183,7 @@ let make = () => {
 
   let genRandomState = _ => {
     setState(_prev => {
-      let nextBoard = randomState(100)
+      let nextBoard = randomState(1200)
       draw(nextBoard)
       nextBoard
     })
@@ -189,7 +196,3 @@ let make = () => {
     <RandomButton genRandomState />
   </div>
 }
-
-//
-
-/// step button: 
